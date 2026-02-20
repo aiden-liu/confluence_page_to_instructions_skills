@@ -1,7 +1,6 @@
 name: Extract Instructions with Copilot
 
 on:
-  workflow_dispatch:
   workflow_run:
     workflows: ["Fetch Confluence Pages"]
     types:
