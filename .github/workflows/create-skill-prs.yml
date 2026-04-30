@@ -1,0 +1,183 @@
+name: Create/Update Skill PRs
+
+on:
+	workflow_run:
+		workflows: ["Extract Skills with Copilot"]
+		types:
+			- completed
+
+jobs:
+	create-skill-prs:
+		if: ${{ github.event.workflow_run.conclusion == 'success' }}
+		runs-on: ubuntu-latest
+		permissions:
+			contents: write
+			pull-requests: write
+			actions: read
+
+		steps:
+			- name: Checkout repository
+				uses: actions/checkout@v4
+				with:
+					fetch-depth: 0
+
+			- name: Download extracted skills artifact
+				uses: actions/download-artifact@v4
+				with:
+					name: extracted-skills
+					path: extracted-skills
+					repository: ${{ github.repository }}
+					run-id: ${{ github.event.workflow_run.id }}
+					github-token: ${{ secrets.GITHUB_TOKEN }}
+				continue-on-error: true
+
+			- name: Check if artifact exists
+				id: check-artifact
+				run: |
+					if [ -d "extracted-skills" ] && [ "$(ls -A extracted-skills)" ]; then
+						echo "artifact_exists=true" >> $GITHUB_OUTPUT
+						echo "Found extracted skills:"
+						ls -la extracted-skills/
+					else
+						echo "artifact_exists=false" >> $GITHUB_OUTPUT
+						echo "No extracted skills artifact found"
+					fi
+
+			- name: Exit if no artifact
+				if: ${{ steps.check-artifact.outputs.artifact_exists == 'false' }}
+				run: |
+					echo "No extracted skills found. Exiting."
+					exit 0
+
+			- name: Set up Git
+				if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+				run: |
+					git config --local user.email "action@github.com"
+					git config --local user.name "GitHub Action"
+
+			- name: Set up Python
+				if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+				uses: actions/setup-python@v4
+				with:
+					python-version: "3.11"
+
+			- name: Install dependencies
+				if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+				run: |
+					pip install azure-ai-inference
+
+			- name: Create/update branches
+				if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+				env:
+					GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+				run: |
+					cd extracted-skills
+					for dir in */; do
+						if [ -d "$dir" ] && [ -f "$dir/SKILL.md" ]; then
+							skill_name=$(basename "$dir")
+							page_id=$(grep -E '^  source_page_id:' "$dir/SKILL.md" | head -n 1 | sed -E 's/.*"([0-9]+)".*/\1/')
+							if [ -z "$page_id" ]; then
+								page_id="unknown"
+							fi
+							branch_name="docs/page_${page_id}_skills"
+							skills_dir="skills/${skill_name}"
+
+							echo "=========================================="
+							echo "Processing: $skill_name (Page ID: $page_id)"
+							echo "Branch: $branch_name"
+							echo "Target dir: $skills_dir"
+							echo "=========================================="
+
+							if git rev-parse --verify "origin/$branch_name" >/dev/null 2>&1; then
+								echo "✓ Branch $branch_name already exists"
+								git checkout "$branch_name"
+								echo "✓ Resyncing with main branch"
+								git pull origin main --rebase
+							else
+								echo "✓ Creating new branch $branch_name"
+								git checkout -b "$branch_name"
+							fi
+
+							rm -rf "../$skills_dir"
+							mkdir -p "../skills"
+							cp -R "$dir" "../$skills_dir"
+
+							if git status --short ../skills/ | grep -q .; then
+								echo "✓ Changes detected, committing..."
+								git add "../$skills_dir"
+
+								summary=$(awk 'BEGIN{in_fm=0} /^---/{in_fm=!in_fm; next} /^# /{print substr($0,3); exit}' "$dir/SKILL.md")
+								if [ -z "$summary" ]; then
+									summary="$skill_name"
+								fi
+								git commit -m "Docs (Skills): page_$page_id - $summary"
+								git push --force-with-lease origin "$branch_name"
+							else
+								echo "✓ No changes detected for page_$page_id"
+							fi
+
+							git checkout main
+						fi
+					done
+
+			- name: Create/update PRs
+				if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+				env:
+					GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+					GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+				run: |
+					cd extracted-skills
+					for dir in */; do
+						if [ -d "$dir" ] && [ -f "$dir/SKILL.md" ]; then
+							skill_name=$(basename "$dir")
+							page_id=$(grep -E '^  source_page_id:' "$dir/SKILL.md" | head -n 1 | sed -E 's/.*"([0-9]+)".*/\1/')
+							if [ -z "$page_id" ]; then
+								page_id="unknown"
+							fi
+							branch_name="docs/page_${page_id}_skills"
+
+							summary=$(awk 'BEGIN{in_fm=0} /^---/{in_fm=!in_fm; next} /^# /{print substr($0,3); exit}' "$dir/SKILL.md")
+							if [ -z "$summary" ]; then
+								summary="$skill_name"
+							fi
+
+							  body_file=$(mktemp)
+							  python3 ../.github/scripts/fill_pr_template.py \
+								--template ../.github/pull_request_template.md \
+								--content "$dir/SKILL.md" \
+								--output "$body_file" \
+								--doc-type skills
+
+							existing_pr=$(gh pr list \
+								--head "$branch_name" \
+								--base "main" \
+								--json number \
+								--jq '.[0].number' 2>/dev/null || echo "")
+
+							if [ -n "$existing_pr" ]; then
+								echo "✓ Found existing PR #$existing_pr"
+								gh pr edit "$existing_pr" \
+									--title "Docs (Skills): page_$page_id - $summary" \
+									--body-file "$body_file"
+							else
+								echo "✓ Creating new PR for page_$page_id"
+								echo "$summary"
+								gh pr create \
+									--head "$branch_name" \
+									--base "main" \
+									--title "Docs (Skills): page_$page_id - $summary" \
+									--assignee "nzta-aiden-liu" \
+									--body-file "$body_file"
+							fi
+							rm -f "$body_file"
+						fi
+					done
+
+			- name: Create summary
+				if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+				run: |
+					echo "## Skill PR Creation Summary" >> $GITHUB_STEP_SUMMARY
+					echo "Successfully committed extracted skills and created/updated PRs" >> $GITHUB_STEP_SUMMARY
+					echo "" >> $GITHUB_STEP_SUMMARY
+					echo "### Skills Processed:" >> $GITHUB_STEP_SUMMARY
+					ls -1 extracted-skills/ | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY

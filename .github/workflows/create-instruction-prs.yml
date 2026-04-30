@@ -55,6 +55,17 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
+      - name: Set up Python
+        if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+        run: |
+          pip install azure-ai-inference
+
       - name: Process extracted instructions
         id: process-files
         if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
@@ -136,6 +147,7 @@ jobs:
         if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd extracted-instructions
           
@@ -155,11 +167,18 @@ jobs:
                 --json number \
                 --jq '.[0].number' 2>/dev/null || echo "")
               
-              if [ -n "$existing_pr" ]; then
+                  body_file=$(mktemp)
+                  python3 ../.github/scripts/fill_pr_template.py \
+                  --template ../.github/pull_request_template.md \
+                  --content "$file" \
+                  --output "$body_file" \
+                  --doc-type instructions
+
+                if [ -n "$existing_pr" ]; then
                 echo "✓ Found existing PR #$existing_pr"
                 gh pr edit "$existing_pr" \
                   --title "Docs (Instructions): page_$page_id - $summary" \
-                  --body "$(cat ../.github/pull_request_template.md)"
+                  --body-file "$body_file"
               else
                 echo "✓ Creating new PR for page_$page_id"
                 echo "$summary"
@@ -168,7 +187,9 @@ jobs:
                   --base "main" \
                   --title "Docs (Instructions): page_$page_id - $summary" \
                   --assignee "nzta-aiden-liu" \
-                  --body "$(cat ../.github/pull_request_template.md)"
+                  --body-file "$body_file"
+                fi
+                rm -f "$body_file"
               fi
             fi
           done

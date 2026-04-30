@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "pkief.material-icon-theme",
+        "pkief.material-product-icons",
+        "aaron-bond.better-comments",
+        "wayou.vscode-todo-highlight",
+        "bierner.markdown-mermaid",
+        "ms-python.python",
+        "github.vscode-github-actions"
+    ]
+}

@@ -37,11 +37,36 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Keep instruction pages only
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config_path = Path("config.json")
+          pages_dir = Path("pages")
+
+          with config_path.open("r", encoding="utf-8") as f:
+              config = json.load(f)
+
+          instruction_ids = {
+              page["id"]
+              for page in config.get("pages", [])
+              if page.get("conversion_type") == "instructions"
+          }
+
+          for html_file in pages_dir.glob("page_*.html"):
+              page_id = html_file.stem.split("page_", 1)[-1]
+              if page_id not in instruction_ids:
+                  html_file.unlink()
+          PY
+
       - name: Extract instructions with Copilot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 scripts/extract_instructions.py
+          python3 .github/scripts/extract_instructions.py
 
       - name: Upload extracted instructions
         uses: actions/upload-artifact@v4
