@@ -1,86 +1,86 @@
 name: Extract Skills with Copilot
 
 on:
-	workflow_run:
-		workflows: ["Fetch Confluence Pages"]
-		types:
-			- completed
+  workflow_run:
+    workflows: ["Fetch Confluence Pages"]
+    types:
+      - completed
 
 jobs:
-	extract-skills:
-		if: ${{ github.event.workflow_run.conclusion == 'success' }}
-		runs-on: ubuntu-latest
-		permissions:
-			contents: read
-			actions: read
-			models: read
+  extract-skills:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      models: read
 
-		steps:
-			- name: Checkout repository
-				uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-			- name: Set up Python
-				uses: actions/setup-python@v4
-				with:
-					python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-			- name: Install dependencies
-				run: |
-					pip install beautifulsoup4 azure-ai-inference
+      - name: Install dependencies
+        run: |
+          pip install beautifulsoup4 azure-ai-inference
 
-			- name: Download pages artifact
-				uses: actions/download-artifact@v4
-				with:
-					name: confluence-pages
-					path: pages
-					repository: ${{ github.repository }}
-					run-id: ${{ github.event.workflow_run.id }}
-					github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download pages artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: confluence-pages
+          path: pages
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-			- name: Keep skill pages only
-				run: |
-					python3 - <<'PY'
-					import json
-					from pathlib import Path
+      - name: Keep skill pages only
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
 
-					config_path = Path("config.json")
-					pages_dir = Path("pages")
+          config_path = Path("config.json")
+          pages_dir = Path("pages")
 
-					with config_path.open("r", encoding="utf-8") as f:
-							config = json.load(f)
+          with config_path.open("r", encoding="utf-8") as f:
+              config = json.load(f)
 
-					skill_ids = {
-							page["id"]
-							for page in config.get("pages", [])
-							if page.get("conversion_type") == "skills"
-					}
+          skill_ids = {
+              page["id"]
+              for page in config.get("pages", [])
+              if page.get("conversion_type") == "skills"
+          }
 
-					for html_file in pages_dir.glob("page_*.html"):
-							page_id = html_file.stem.split("page_", 1)[-1]
-							if page_id not in skill_ids:
-									html_file.unlink()
-					PY
+          for html_file in pages_dir.glob("page_*.html"):
+              page_id = html_file.stem.split("page_", 1)[-1]
+              if page_id not in skill_ids:
+                  html_file.unlink()
+          PY
 
-			- name: Extract skills with Copilot
-				env:
-					GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-				run: |
-					python3 .github/scripts/extract_skills.py
+      - name: Extract skills with Copilot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 .github/scripts/extract_skills.py
 
-			- name: Upload extracted skills
-				uses: actions/upload-artifact@v4
-				with:
-					name: extracted-skills
-					path: temp_skills
-					if-no-files-found: warn
+      - name: Upload extracted skills
+        uses: actions/upload-artifact@v4
+        with:
+          name: extracted-skills
+          path: temp_skills
+          if-no-files-found: warn
 
-			- name: Create summary
-				run: |
-					echo "## Skill Extraction Summary" >> $GITHUB_STEP_SUMMARY
-					echo "Processed $(ls -1 temp_skills/ 2>/dev/null | wc -l) skills" >> $GITHUB_STEP_SUMMARY
-					echo "Check the artifacts for extracted skills" >> $GITHUB_STEP_SUMMARY
-					if [ -d "temp_skills" ]; then
-						echo "" >> $GITHUB_STEP_SUMMARY
-						echo "### Generated Skill Directories:" >> $GITHUB_STEP_SUMMARY
-						ls -1 temp_skills/ | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
-					fi
+      - name: Create summary
+        run: |
+          echo "## Skill Extraction Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Processed $(ls -1 temp_skills/ 2>/dev/null | wc -l) skills" >> $GITHUB_STEP_SUMMARY
+          echo "Check the artifacts for extracted skills" >> $GITHUB_STEP_SUMMARY
+          if [ -d "temp_skills" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Generated Skill Directories:" >> $GITHUB_STEP_SUMMARY
+            ls -1 temp_skills/ | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+          fi
