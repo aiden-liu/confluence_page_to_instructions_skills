@@ -1,6 +1,6 @@
 ---
 name: dip-development-standards
-description: Defines standards and best practices for code management, CI/CD, deployment, and quality assurance on the Data Intelligence Platform (DIP). Use this skill to structure development on Azure Data Factory, Databricks, and related environments for secure, reproducible, and auditable engineering workflows.
+description: Provides comprehensive standards for development work on the Data Intelligence Platform (DIP). Use this skill to guide code management, branching, commit hygiene, CI/CD, infrastructure, code quality, reusability, and governance on Azure Data Factory and Databricks projects.
 metadata:
   source_page_id: "4204199938"
   source_page_version: "1"
@@ -8,128 +8,149 @@ metadata:
 ---
 # DIP Development Standards
 
-This skill guides agents and teams on the agreed standards for developing, managing, deploying, and reviewing code on the Data Intelligence Platform (DIP), including Azure Data Factory and Databricks. Use this skill whenever engineering or analytics work involves DIP assets, ensuring compliance, security, and traceability.
+This skill summarizes best practices and mandatory standards for engineering teams working on the Data Intelligence Platform (DIP), particularly within Azure Data Factory and Databricks environments. Follow these steps and recommendations for secure, auditable, and high-quality development.
 
-## Step-by-Step Instructions
+## 1. Code Management
 
-### 1. Source Control and Code Management
+- Store ALL source code in Github Repos or an approved equivalent.
+- Never keep production code only in Databricks workspaces or on local machines; workspaces must sync with repos.
+- Large artefacts (data files, binaries, models) should be kept in blob storage and referenced, **not** committed to repos.
 
-- **Store all source code in Github Repos** (or a NZTA-approved equivalent).
-- **Never keep production code isolated in Databricks workspaces or local machines.** Databricks notebooks must be linked to repos.
-- **Do not commit large artefacts (data files, models) to source control.** Store them in approved blob storage and reference from code.
+### Branching Strategy
 
-### 2. Branching Strategy
+- Use trunk-based branching with a long-lived main branch.
+- Create feature branches for individual work items. Merge via Pull Request (PR).
+- Branch names: lowercase, hyphens-separated, prefixed with work item IDs (e.g. `feature/ABC1234-add-ccs-data-pipeline`).
 
-- **Follow trunk-based branching:** Maintain a long-lived `main` branch for production.
-- **Create feature branches** for individual work items. Merge via pull requests (PRs).
-- **Branch naming:**
-  - Prefix with work item ID (e.g., `feature/JIRA-5678-add-ccs-pipeline`).
-  - Use lowercase letters and hyphens; exceptions allowed for Jira IDs.
-- **Branch types:**
-  - `feature/` for new features
-  - `refactor/` for restructuring
-  - `bugfix/` for non-critical fixes
-  - `hotfix/` for urgent fixes
-  - `chore/` for non-functional tasks
-  - `perf/` for performance improvements
+#### Branch Types
 
-### 3. Pull Requests and Code Reviews
+| Type        | Purpose                                | Example                                         |
+|-------------|----------------------------------------|-------------------------------------------------|
+| feature     | New features/enhancements               | feature/ABC1234-add-ccs-data-pipeline           |
+| refactor    | Restructuring existing code             | refactor/DEF4321-move-ccs-to-sdp-pipelines      |
+| bugfix      | Fixing non-critical bugs                | bugfix/GHI5678-fix-duplicate-customers          |
+| hotfix      | Critical fixes for production           | hotfix/GHI8765-fix-hr-data-duplicates           |
+| chore       | Non-functional tasks or dependencies    | chore/JKL9012-add-ccs-pipeline-docs             |
+| perf        | Performance improvements                | perf/MNO1111-refine-job-cluster-config          |
 
-- **All merges to main via PRs.**
-- **Peer review required** for all material code changes.
-- **Minor, low-risk updates** (e.g., documentation) may skip review if agreed.
-- **PRs must include links** to Jira items and documentation.
-- **Automated build/test pipelines** must run on PRs; merges blocked if tests fail.
+## 2. Pull Requests & Code Reviews
 
-### 4. Commit Hygiene
+- All merges to main must occur via PRs. Peer review required for material code changes.
+- High-risk/production changes **must** always be reviewed.
+- PRs must include links to relevant Jira tickets and documentation.
+- Automated build/test pipelines run on PRs; merges blocked if tests fail.
 
-- **One change per commit; frequent commits.**
-- **Commit messages:**
-  - Follow [Conventional Commits](https://www.conventionalcommits.org/).
-  - Prefix with type: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `style`, `perf`, `build`.
-- **Examples:**
-  - `feat(ccs): add access tables`
-  - `fix(tm): resolve client-vehicle joins`
-  - `docs: update README`
-- **Squash or rebase private branches only, never rewrite shared history.**
+## 3. Commit Hygiene
 
-### 5. Security and Compliance
+- One change per commit. Commit often and keep commits small.
+- Use Conventional Commits format:
+  - feat(scope): add access tables
+  - fix(scope): resolve client-vehicle joins in silver
+- Common types: feat, fix, chore, docs, refactor, test, style, perf, build.
 
-- **No secrets, keys, credentials in code.** Use Azure Key Vault and env variables.
-- **Github repos:** Enable branch protection, PR requirement, audit logging.
-- **Production releases:** Trace back to commit hash; all jobs/pipelines must record source commit.
+#### Commit Examples
 
-### 6. Workspace Integration
+- `docs: correct spelling of CHANGELOG`
+- `feat(cluster): add large job cluster template`
+- `fix: deduplicate copper customers`
 
-- Refactor production logic from Databricks notebooks into repos.
-- Notebooks must follow branching/PR process.
+## 4. Security and Compliance
 
-### 7. CI/CD Practices
+- **Never** store secrets, keys, or credentials in code; use Azure Key Vault and environment variables.
+- Github repos require branch protection, mandatory PRs, and audit logging.
+- Releases trace back to commit hash; jobs/pipelines record source commit in metadata.
 
-- **Automate builds, tests, deployments** with Github Actions; no manual production edits.
-- **Standard pipeline stages:** build → test → security scan → package → deploy.
-- **Databricks deployments use DAB** (Databricks Asset Bundles) for jobs/flows.
-- **Promote changes Dev → Test → Prod** via automated processes and approvals.
+## 5. Workspace Integration
 
-### 8. Security in CI/CD
+- Databricks notebooks must be linked to repos and use the same branching/PR process.
+- Refactor any production logic developed in ad-hoc notebooks into repos.
 
-- Static/dynamic security scanning.
-- Dependency vulnerability checks.
-- Secret detection; fail pipelines on security issues.
+## 6. CI/CD Practices
 
-### 9. Configuration and Secret Management
+- Automate all builds, tests, and deployments via Github Actions.
+- No manual deployments or direct edits in production.
+- CI/CD pipelines: build → test → security scan → package → deploy.
+- Use Databricks Asset Bundles (DABs) for packaging/deployment.
+
+### Environment Promotion
+
+- Deployment sequence: Dev → Test → Prod, automated with approvals.
+- DABs must define environment-specific configs.
+
+### Security
+
+- CI/CD pipelines must fail on security test failures.
+
+## 7. Configuration & Secret Management
 
 - Store all secrets in Azure Key Vault.
-- DAB must use injected secrets for configs.
+- Pipelines must securely retrieve secrets at runtime.
 
-### 10. Infrastructure-as-Code (IaC)
+## 8. Infrastructure-as-Code (IaC)
 
-- Provision all platform infra (clusters, policies) with Terraform.
-- Secure, version-control Terraform state.
-- Peer review all infra changes; automate validation and deployment.
+- Use Terraform for provisioning clusters, networking, policies, etc.
+- Validate templates in CI/CD; store Terraform state securely.
+- Peer review all infrastructure changes.
 
-### 11. Deployment Governance
+## 9. Deployment Governance
 
-- Explicit approval for production deployments.
-- ServiceNow change requests required for each deployment.
-- Logs must capture deployment metadata and approvers.
-- Rollback mechanisms must always exist.
+- All production deployments require explicit approvals and ServiceNow change requests.
+- Pipeline logs must capture approval and deployment data.
+- Rollback mechanisms required.
+- Deployment metadata must be catalogued.
 
-### 12. Observability
+## 10. Observability & Feedback
 
-- Pipelines emit telemetry (duration, failures, success).
-- Automatic alerts for build/test/deploy failures.
-- Smoke tests/data quality checks run post-deployment.
+- Pipelines must emit telemetry (duration, failures, success).
+- Alerts must trigger on build/test/deployment failures.
+- Smoke tests and data quality checks run post-deployment.
 
-### 13. Code Quality
+## 11. Standardisation & Reuse
 
-- **Follow NZTA coding guidelines** for each language.
-- Python: Type hints, docstrings, avoid magic numbers, use config params.
-- **Linting and static analysis**: Fail builds on critical issues.
-- **Structured logging:** Use JSON/key-value, never log sensitive data.
-- **Error handling:** Catch and log exceptions; retry policies for transient fails.
-- **Peer reviews:** Assess readability, correctness, security, and maintainability.
-- **Security by design:** Scan dependencies/code, prohibit unsafe patterns (e.g., no `eval`).
+- Standardise CI/CD templates and DAB-based patterns across teams.
+- Embed pipeline checks (linting, testing, observability) into shared templates.
 
-### 14. Reusability
+## 12. Code Quality
 
-- Shared libraries for common logic; versioned and documented.
-- Team/domain/org-level scope as appropriate; stricter governance at org-level.
-- Standard templates for CI/CD, IaC, Databricks bundles.
-- Assets catalogued in SharePoint and Confluence; Unity Catalog links datasets to reusable logic.
+- Follow NZTA coding guidelines for each language.
+- Python: Use type hints, docstrings, avoid magic numbers.
+- Notebooks: Separate SQL and Python; reusable logic in libraries.
+- Run linting/static analysis automatically (flake8/pylint/black for Python).
+- Structured logging (JSON/key-value), never log sensitive data.
+- Error handling: Meaningful exceptions, retry policies for transient errors.
+- All code must undergo peer review, including checks for tests and documentation updates.
+
+## 13. Security by Design
+
+- Scan code for vulnerabilities; prohibit unsafe functions (e.g., eval).
+- Shared logic in libraries; functions/modules should be small and testable.
+
+## 14. Performance
+
+- Optimise Spark/Databricks code (partitioning, caching, avoid UDF misuse).
+- Benchmark large transformations before production.
+
+## 15. Reusability
+
+- Extract common logic into shared libraries: team, domain, or organisation level.
+- Version, document, and catalog libraries; use platform package management (PyPI, R repo).
+- Build reusable components (ingestion, schema validation, monitoring).
+- Use standard templates for pipelines, Terraform, DABs.
+- Document all reusable assets; maintainers and deprecation policies required.
+
+## 16. Edge Cases & Exceptions
+
+- Large artefacts: Never commit to source; reference blob storage.
+- Minor (low-risk/documentation) changes may bypass review if team-approved.
+- Do **not** rewrite shared repo history (e.g., avoid force-push to main).
+- Teams need NOT implement libraries in multiple languages—native language suffices.
 
 ## Examples
 
-- **Branch name:** `feature/ABC1234-add-ccs-data-pipeline`
-- **Commit message:** `fix: deduplicate copper customers`
-- **Pull request:** Links to Jira work and documents, passes automated tests, reviewed by peer.
-
-## Edge Cases
-
-- **Work item IDs may use uppercase letters** in branch names as exception.
-- **Minor doc/meta changes** may merge without review if team agrees criteria.
-- **Never squash or rebase public branches**; impacts traceability.
-- **Ad-hoc notebooks allowed for exploration,** but production logic must move to repos.
+- Pull request workflow: Feature branch, PR with Jira link, automated tests, peer review, merge to main.
+- Commit message: `fix(ccs): resolve double-counting in transactions`.
+- Databricks notebook: Linked to repo, PR for production deployment.
+- Terraform change: PR, CI/CD validates template, peer review, approved ServiceNow change.
 
 ## Source
 
