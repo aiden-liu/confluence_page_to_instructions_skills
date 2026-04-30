@@ -70,6 +70,8 @@ jobs:
                 ;;
             esac
 
+            echo "Processing PR #$pr_number with head ref '$head_ref' for doc type '$doc_type'"
+
             git fetch origin "$head_ref"
             changed_files=$(git diff --name-only origin/main...origin/$head_ref)
 
@@ -93,6 +95,10 @@ jobs:
               --content "$content_file" \
               --output "$body_file" \
               --doc-type "$doc_type"
+            
+            if [ "${ACTIONS_STEP_DEBUG:-false}" = "true" ]; then
+              echo "✓ Generated PR body for PR #$pr_number: $(cat "$body_file")"
+            fi
 
             gh pr edit "$pr_number" --body-file "$body_file"
 
