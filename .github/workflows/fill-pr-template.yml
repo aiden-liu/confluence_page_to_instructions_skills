@@ -1,0 +1,102 @@
+name: Fill PR Templates
+
+on:
+  workflow_run:
+    workflows: ["Create/Update Instruction PRs", "Create/Update Skill PRs"]
+    types:
+      - completed
+
+jobs:
+  fill-pr-templates:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install azure-ai-inference
+
+      - name: Fill PR templates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin main
+
+          template_file=$(mktemp)
+          if git show origin/main:.github/pull_request_template.md > "$template_file"; then
+            echo "Using template from origin/main"
+          else
+            echo "Falling back to working tree template"
+            cp .github/pull_request_template.md "$template_file"
+          fi
+
+          prs=$(gh pr list --state open --base main --json number,headRefName --jq '.[] | "\(.number) \(.headRefName)"')
+          if [ -z "$prs" ]; then
+            echo "No open PRs found"
+            exit 0
+          fi
+
+          while read -r pr_number head_ref; do
+            if [ -z "$pr_number" ] || [ -z "$head_ref" ]; then
+              continue
+            fi
+
+            case "$head_ref" in
+              docs/page_*_instructions)
+                doc_type="instructions"
+                ;;
+              docs/page_*_skills)
+                doc_type="skills"
+                ;;
+              *)
+                continue
+                ;;
+            esac
+
+            git fetch origin "$head_ref"
+            changed_files=$(git diff --name-only origin/main...origin/$head_ref)
+
+            if [ "$doc_type" = "instructions" ]; then
+              content_path=$(echo "$changed_files" | grep -E '^instructions/.*\.instructions\.md$' | head -n 1 || true)
+            else
+              content_path=$(echo "$changed_files" | grep -E '^skills/.+/SKILL\.md$' | head -n 1 || true)
+            fi
+
+            if [ -z "$content_path" ]; then
+              echo "No content file found for PR #$pr_number ($head_ref)"
+              continue
+            fi
+
+            content_file=$(mktemp)
+            git show "origin/$head_ref:$content_path" > "$content_file"
+
+            body_file=$(mktemp)
+            python3 .github/scripts/fill_pr_template.py \
+              --template "$template_file" \
+              --content "$content_file" \
+              --output "$body_file" \
+              --doc-type "$doc_type"
+
+            gh pr edit "$pr_number" --body-file "$body_file"
+
+            rm -f "$content_file" "$body_file"
+          done <<< "$prs"
+
+          rm -f "$template_file"

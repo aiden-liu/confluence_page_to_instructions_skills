@@ -167,14 +167,8 @@ jobs:
                 --json number \
                 --jq '.[0].number' 2>/dev/null || echo "")
               
-                  body_file=$(mktemp)
-                  python3 ../.github/scripts/fill_pr_template.py \
-                  --template ../.github/pull_request_template.md \
-                  --content "$file" \
-                  --output "$body_file" \
-                  --doc-type instructions
-
-                if [ -n "$existing_pr" ]; then
+              body_file=$(mktemp)
+              if [ -n "$existing_pr" ]; then
                 echo "✓ Found existing PR #$existing_pr"
                 gh pr edit "$existing_pr" \
                   --title "Docs (Instructions): page_$page_id - $summary" \
@@ -186,7 +180,7 @@ jobs:
                   --head "$branch_name" \
                   --base "main" \
                   --title "Docs (Instructions): page_$page_id - $summary" \
-                  --assignee "nzta-aiden-liu" \
+                  --assignee "aiden-liu" \
                   --body-file "$body_file"
                 fi
                 rm -f "$body_file"

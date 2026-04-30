@@ -142,12 +142,6 @@ jobs:
               fi
 
               body_file=$(mktemp)
-              python3 ../.github/scripts/fill_pr_template.py \
-                --template ../.github/pull_request_template.md \
-                --content "$dir/SKILL.md" \
-                --output "$body_file" \
-                --doc-type skills
-
               existing_pr=$(gh pr list \
                 --head "$branch_name" \
                 --base "main" \
@@ -166,7 +160,7 @@ jobs:
                   --head "$branch_name" \
                   --base "main" \
                   --title "Docs (Skills): page_$page_id - $summary" \
-                  --assignee "nzta-aiden-liu" \
+                  --assignee "aiden-liu" \
                   --body-file "$body_file"
               fi
               rm -f "$body_file"
