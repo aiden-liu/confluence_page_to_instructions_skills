@@ -96,9 +96,7 @@ jobs:
               --output "$body_file" \
               --doc-type "$doc_type"
             
-            if [ "${ACTIONS_STEP_DEBUG:-false}" = "true" ]; then
-              echo "✓ Generated PR body for PR #$pr_number: $(cat "$body_file")"
-            fi
+            echo "✓ Generated PR body for PR #$pr_number: $(cat "$body_file")"
 
             gh pr edit "$pr_number" --body-file "$body_file"
 
