@@ -98,3 +98,5 @@ Gold tables are designed for analytics, typically using a star schema:
 ## Source
 
 Source page version: 11
+
+Detailed reference: [references/REFERENCE.md](references/REFERENCE.md)
