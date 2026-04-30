@@ -3,13 +3,13 @@
 
 ## Type of Change
 <!-- Mark the relevant option with an "x" -->
-- [ ] New instruction created
-- [ ] Instruction updated/modified
-- [ ] Instruction removed
-- [ ] Instruction clarified or reorganized
-- [ ] Multiple instructions changed
+- [ ] New instruction/skill created
+- [ ] Instruction/Skill updated/modified
+- [ ] Instruction/Skill removed
+- [ ] Instruction/Skill clarified or reorganized
+- [ ] Multiple instructions/skills changed
 
-## Instructions Modified
+## Instructions/Skills Modified
 <!-- List the instruction files/pages affected -->
 - 
 
@@ -24,19 +24,19 @@
 
 ## Impact Assessment
 <!-- Describe how these changes affect users or the system -->
-- [ ] Affects user-facing instructions
+- [ ] Affects user-facing instructions/skills
 - [ ] Affects internal processes
 - [ ] Requires user action/awareness
 - [ ] Backwards compatible
 
 ## Testing
 <!-- How have these changes been validated? -->
-- [ ] Instruction clarity verified
+- [ ] Instruction/skill clarity verified
 - [ ] Links/references verified
 - [ ] Formatting reviewed
 
 ## Checklist
-- [ ] Instructions are clear and well-formatted
+- [ ] Instructions/skills are clear and well-formatted
 - [ ] All related links are correct
 - [ ] Changes are consistent with existing instruction style
 - [ ] Documentation is complete
