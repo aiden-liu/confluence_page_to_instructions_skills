@@ -37,7 +37,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Keep skill pages only
+      - name: Keep skill pages only from config
         run: |
           python3 - <<'PY'
           import json

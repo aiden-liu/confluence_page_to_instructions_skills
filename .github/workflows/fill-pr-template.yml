@@ -34,6 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name }}
         run: |
           set -euo pipefail
 
@@ -56,6 +57,18 @@ jobs:
           while read -r pr_number head_ref; do
             if [ -z "$pr_number" ] || [ -z "$head_ref" ]; then
               continue
+            fi
+
+            if [ "$TRIGGER_WORKFLOW" = "Create/Update Instruction PRs" ]; then
+              case "$head_ref" in
+                docs/page_*_instructions) : ;;
+                *) continue ;;
+              esac
+            elif [ "$TRIGGER_WORKFLOW" = "Create/Update Skill PRs" ]; then
+              case "$head_ref" in
+                docs/page_*_skills) : ;;
+                *) continue ;;
+              esac
             fi
 
             case "$head_ref" in

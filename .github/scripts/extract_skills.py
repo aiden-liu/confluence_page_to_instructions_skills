@@ -154,6 +154,56 @@ def parse_frontmatter(markdown: str) -> Tuple[Optional[dict], str]:
 	return data, "\n".join(body_lines).strip()
 
 
+def read_skill_metadata(skill_path: Path) -> dict:
+	"""
+	Read metadata block from a SKILL.md frontmatter.
+	"""
+	try:
+		lines = skill_path.read_text(encoding="utf-8").splitlines()
+		if not lines or lines[0].strip() != "---":
+			return {}
+		end_index = None
+		for idx, line in enumerate(lines[1:], start=1):
+			if line.strip() == "---":
+				end_index = idx
+				break
+		if end_index is None:
+			return {}
+		frontmatter_lines = lines[1:end_index]
+		metadata: dict = {}
+		in_metadata = False
+		for line in frontmatter_lines:
+			stripped = line.strip()
+			if stripped == "metadata:":
+				in_metadata = True
+				continue
+			if in_metadata:
+				if not line.startswith(" "):
+					in_metadata = False
+					continue
+				if ":" in stripped:
+					key, value = stripped.split(":", 1)
+					metadata[key.strip()] = value.strip().strip('"')
+		return metadata
+	except Exception:
+		return {}
+
+
+def find_existing_skill(skills_path: Path, page_id: str, version: str) -> Optional[Path]:
+	"""
+	Find an existing skill with matching source metadata.
+	"""
+	if not skills_path.exists():
+		return None
+	for skill_file in skills_path.glob("*/SKILL.md"):
+		metadata = read_skill_metadata(skill_file)
+		if not metadata:
+			continue
+		if metadata.get("source_page_id") == page_id and metadata.get("source_page_version") == version:
+			return skill_file
+	return None
+
+
 def build_frontmatter(
 	name: str,
 	description: str,
@@ -279,9 +329,11 @@ def build_reference_markdown(title: str, version: str, reference_text: str) -> s
 
 def process_pages_directory(
 	pages_dir: str = "pages",
+	skills_dir: str = "skills",
 	output_dir: str = "temp_skills",
 ) -> None:
 	pages_path = Path(pages_dir)
+	skills_path = Path(skills_dir)
 	output_path = Path(output_dir)
 	output_path.mkdir(exist_ok=True)
 
@@ -313,6 +365,11 @@ def process_pages_directory(
 				print(f"  - Detected version: {version}")
 			else:
 				print("  - No version info found")
+
+			existing_skill = find_existing_skill(skills_path, page_id, version)
+			if existing_skill:
+				print(f"  - Existing skill found ({existing_skill}), skipping extraction")
+				continue
 
 			skill_name, skill_markdown = extract_skill_from_html(
 				clean_text,
