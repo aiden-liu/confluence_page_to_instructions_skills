@@ -180,8 +180,8 @@ jobs:
                   --head "$branch_name" \
                   --base "main" \
                   --title "Docs (Instructions): page_$page_id - $summary" \
-                  --reviewer "@copilot" \
-                  --body-file "$body_file"
+                  --body-file "$body_file" \
+                  --reviewer @copilot
                 fi
                 rm -f "$body_file"
               fi
