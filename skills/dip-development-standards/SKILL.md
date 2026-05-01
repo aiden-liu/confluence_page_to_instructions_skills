@@ -49,7 +49,7 @@ This skill guides data and platform engineers, data analysts, and scientists on 
 5. **Security & Compliance**
    - Do not store secrets, keys, or credentials in code.
    - Use Azure Key Vault and environment variables.
-   - Branch protection, mandatory PRs, and audit logging required in Github.
+   - Branch protection, mandatory PRs, and audit logging required in GitHub.
 
 6. **Reproducibility & Traceability**
    - Every production release must trace to a commit hash.
@@ -61,7 +61,7 @@ This skill guides data and platform engineers, data analysts, and scientists on 
    - Exploration notebooks must be refactored before deploying to production.
 
 8. **CI/CD Practices**
-   - Automate all builds, tests, and deployments with Github Actions.
+   - Automate all builds, tests, and deployments with GitHub Actions.
    - Pipelines: build → test → security scan → package → deploy.
    - Use Databricks Asset Bundles (DAB) for packaging/deployment.
    - Progress changes through Dev → Test → Prod automatically.
@@ -136,7 +136,7 @@ This skill guides data and platform engineers, data analysts, and scientists on 
 - Large files or models must NOT be committed—use blob storage.
 - Minor documentation changes may skip peer review if team-approved.
 - Do not rewrite shared git history after PR merges.
-- Never store secrets in code or Github variables; use Key Vault always.
+- Never store secrets in code or GitHub variables; use Key Vault always.
 - Multiple changes must be made as separate commits and PRs.
 
 ## Source
