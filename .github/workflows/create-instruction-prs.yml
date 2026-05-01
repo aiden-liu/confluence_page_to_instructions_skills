@@ -180,7 +180,7 @@ jobs:
                   --head "$branch_name" \
                   --base "main" \
                   --title "Docs (Instructions): page_$page_id - $summary" \
-                  --assignee "aiden-liu" \
+                  --reviewer "@copilot" \
                   --body-file "$body_file"
                 fi
                 rm -f "$body_file"
