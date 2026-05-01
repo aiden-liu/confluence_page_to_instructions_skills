@@ -49,7 +49,8 @@ These guidelines ensure consistent naming, metadata management, and modeling acr
 - Add metadata columns like `__START_AT`, `__END_AT`.
 
 ### Silver Layer (Business Modeling)
-- Tables: `silver_[business_area]` (e.g., `silver_purchasing`), add `_stg_` prefix if staging.
+- Schemas: Use `silver_[business_area]` for the schema name (e.g., `silver_purchasing`).
+- Tables: Use snake_case table names within the silver schema; use the `stg_` prefix for staging tables where needed.
 - Use snake_case for both objects and columns.
 - Rename columns for business clarity (e.g., `contract_name` not `name`).
 - Avoid system-specific/non-standard abbreviations.
