@@ -72,6 +72,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd extracted-skills
+          mkdir -p ../skill_zips
           for dir in */; do
             if [ -d "$dir" ] && [ -f "$dir/SKILL.md" ]; then
               skill_name=$(basename "$dir")
@@ -102,6 +103,28 @@ jobs:
               mkdir -p "../skills"
               cp -R "$dir" "../$skills_dir"
 
+              SKILLS_DIR="../$skills_dir" \
+              ZIP_NAME="$skill_name.zip" \
+              python3 - <<'PY'
+                import os
+                import zipfile
+                from pathlib import Path
+
+                skills_dir = Path(os.environ["SKILLS_DIR"])
+                zip_path = skills_dir / os.environ["ZIP_NAME"]
+
+                with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                  for path in skills_dir.rglob("*"):
+                    if path == zip_path:
+                      continue
+                    if path.is_dir():
+                      continue
+                    rel_path = path.relative_to(skills_dir)
+                    zf.write(path, rel_path.as_posix())
+              PY
+
+                cp "../$skills_dir/$skill_name.zip" ../skill_zips/"$skill_name.zip"
+
               if git status --short ../skills/ | grep -q .; then
                 echo "✓ Changes detected, committing..."
                 git add "../$skills_dir"
@@ -119,6 +142,14 @@ jobs:
               git checkout main
             fi
           done
+
+      - name: Upload skill zip artifacts
+        if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-zips
+          path: skill_zips
+          if-no-files-found: warn
 
       - name: Create/update PRs
         if: ${{ steps.check-artifact.outputs.artifact_exists == 'true' }}
@@ -160,7 +191,7 @@ jobs:
                   --head "$branch_name" \
                   --base "main" \
                   --title "Docs (Skills): page_$page_id - $summary" \
-                  --assignee "aiden-liu" \
+                  --reviewer "@copilot" \
                   --body-file "$body_file"
               fi
               rm -f "$body_file"
