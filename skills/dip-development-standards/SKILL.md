@@ -122,9 +122,11 @@ This skill guides data and platform engineers, data analysts, and scientists on 
 - **Commit Messages:**  
   `docs: correct spelling of CHANGELOG`  
   `feat(cluster): add large job cluster template`  
-  `fix: deduplicate copper customers  
-  Deduplicated customer table causing false negatives.  
-  Refs: ABC-1234`
+  ```
+  fix: deduplicate copper customers
+  Deduplicated customer table causing false negatives.
+  Refs: ABC-1234
+  ```
 
 - **PR Requirements:**  
   Include relevant Jira links, documentation, and run build/test/scan stages.
