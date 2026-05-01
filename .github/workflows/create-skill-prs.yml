@@ -103,25 +103,9 @@ jobs:
               mkdir -p "../skills"
               cp -R "$dir" "../$skills_dir"
 
-              SKILLS_DIR="../$skills_dir" \
-              ZIP_NAME="$skill_name.zip" \
-              python3 - <<'PY'
-              import os
-              import zipfile
-              from pathlib import Path
-
-              skills_dir = Path(os.environ["SKILLS_DIR"])
-              zip_path = skills_dir / os.environ["ZIP_NAME"]
-
-              with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-                for path in skills_dir.rglob("*"):
-                  if path == zip_path:
-                    continue
-                  if path.is_dir():
-                    continue
-                  rel_path = path.relative_to(skills_dir)
-                  zf.write(path, rel_path.as_posix())
-              PY
+              python3 ../.github/scripts/zip_skill_dir.py \
+                --skills-dir "../$skills_dir" \
+                --zip-name "$skill_name.zip"
 
               cp "../$skills_dir/$skill_name.zip" ../skill_zips/"$skill_name.zip"
 
