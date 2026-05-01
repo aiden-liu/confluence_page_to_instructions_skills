@@ -106,24 +106,24 @@ jobs:
               SKILLS_DIR="../$skills_dir" \
               ZIP_NAME="$skill_name.zip" \
               python3 - <<'PY'
-                import os
-                import zipfile
-                from pathlib import Path
+              import os
+              import zipfile
+              from pathlib import Path
 
-                skills_dir = Path(os.environ["SKILLS_DIR"])
-                zip_path = skills_dir / os.environ["ZIP_NAME"]
+              skills_dir = Path(os.environ["SKILLS_DIR"])
+              zip_path = skills_dir / os.environ["ZIP_NAME"]
 
-                with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-                  for path in skills_dir.rglob("*"):
-                    if path == zip_path:
-                      continue
-                    if path.is_dir():
-                      continue
-                    rel_path = path.relative_to(skills_dir)
-                    zf.write(path, rel_path.as_posix())
+              with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                for path in skills_dir.rglob("*"):
+                  if path == zip_path:
+                    continue
+                  if path.is_dir():
+                    continue
+                  rel_path = path.relative_to(skills_dir)
+                  zf.write(path, rel_path.as_posix())
               PY
 
-                cp "../$skills_dir/$skill_name.zip" ../skill_zips/"$skill_name.zip"
+              cp "../$skills_dir/$skill_name.zip" ../skill_zips/"$skill_name.zip"
 
               if git status --short ../skills/ | grep -q .; then
                 echo "✓ Changes detected, committing..."

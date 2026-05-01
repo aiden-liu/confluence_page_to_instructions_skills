@@ -109,8 +109,6 @@ jobs:
               --content "$content_file" \
               --output "$body_file" \
               --doc-type "$doc_type"
-            
-            echo "✓ Generated PR body for PR #$pr_number: $(cat "$body_file")"
 
             gh pr edit "$pr_number" --body-file "$body_file"
 
