@@ -302,6 +302,7 @@ def generate_fallback_body(title: str, version: str) -> str:
 		"- Missing context in the source page.\n"
 		"- Conflicting guidance between sections.\n\n"
 		f"Source page version: {version}\n"
+		"Detailed reference: [references/REFERENCE.md](references/REFERENCE.md)\n"
 	)
 
 
