@@ -149,3 +149,4 @@ This skill provides step-by-step guidance for applying development standards on 
 ## Source
 
 Source page version: 1
+Detailed reference: [references/REFERENCE.md](references/REFERENCE.md)
