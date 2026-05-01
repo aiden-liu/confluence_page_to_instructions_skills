@@ -14,7 +14,7 @@ This skill provides step-by-step guidance for applying development standards on 
 
 ### 1. Source Control
 
-- **Store all code** in Github Repos (or approved equivalents).
+- **Store all code** in GitHub Repos (or approved equivalents).
 - **Integrate workspace notebooks** with repos; production code must not reside solely in Databricks, notebooks, or local machines.
 - **Do NOT commit large artefacts** (data files, models, binaries); store them in approved blob storage and reference as needed.
 
