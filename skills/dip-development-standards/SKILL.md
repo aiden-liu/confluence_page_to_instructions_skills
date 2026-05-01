@@ -13,7 +13,7 @@ This skill guides data and platform engineers, data analysts, and scientists on 
 ## Step-by-Step Instructions
 
 1. **Code Management**
-   - Store all code in Github Repos (or approved equivalents).
+   - Store all code in GitHub Repos (or approved equivalents).
    - No production code may be kept solely in Databricks workspaces or local machines.
    - Workspace notebooks must be source-controlled via repo integration.
    - Large artefacts (data, models, binaries) must not be committed; use blob storage and reference them.
