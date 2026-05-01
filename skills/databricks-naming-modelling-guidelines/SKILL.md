@@ -1,6 +1,6 @@
 ---
 name: databricks-naming-modelling-guidelines
-description: Guidelines for naming conventions, metadata columns, and modeling approaches in the Databricks area of the Data Intelligence Platform. Use this skill when designing, naming, or modeling datasets within Databricks, ensuring consistency and adherence to NZTA standards.
+description: Guidelines for naming conventions, metadata columns, and modelling approaches in the Databricks area of the Data Intelligence Platform. Use this skill when designing, naming, or modelling datasets within Databricks, ensuring consistency and adherence to NZTA standards.
 metadata:
   source_page_id: "4095672332"
   source_page_version: "11"
