@@ -39,7 +39,7 @@ These guidelines ensure consistent naming, metadata management, and modeling acr
 
 ### Bronze Layer (Raw Source)
 - Table names match the source object/file (lowercase enforced).
-- If source lacks a specific name, use snake_case. Example: `assessmentcontracttype`.
+- If source lacks a specific name, use snake_case. Example: `assessmentcontract_type`.
 - Keep column names as per source (including case), unless absent, then use snake_case.
 - Do not use plurals/abbreviations (e.g., avoid `assessments`, `adj_reasons`).
 
