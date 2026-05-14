@@ -18,70 +18,70 @@ from azure.core.credentials import AzureKeyCredential
 
 
 def call_copilot_api(prompt: str = "", model: str = "openai/gpt-4.1") -> Optional[str]:
-	"""
-	Call the GitHub Copilot API to extract a skill.
-	"""
-	try:
-		token = os.environ["GITHUB_TOKEN"]
-		endpoint = "https://models.github.ai/inference"
+    """
+    Call the GitHub Copilot API to extract a skill.
+    """
+    try:
+        token = os.environ["GITHUB_TOKEN"]
+        endpoint = "https://models.github.ai/inference"
 
-		client = ChatCompletionsClient(
-			endpoint=endpoint,
-			credential=AzureKeyCredential(token),
-			api_version="2024-12-01-preview",
-		)
+        client = ChatCompletionsClient(
+            endpoint=endpoint,
+            credential=AzureKeyCredential(token),
+            api_version="2024-12-01-preview",
+        )
 
-		response = client.complete(
-			messages=[
-				{
-					"role": "developer",
-					"content": "You are a helpful assistant that extracts Agent Skills from documentation.",
-				},
-				UserMessage(prompt),
-			],
-			model=model,
-		)
+        response = client.complete(
+            messages=[
+                {
+                    "role": "developer",
+                    "content": "You are a helpful assistant that extracts Agent Skills from documentation.",
+                },
+                UserMessage(prompt),
+            ],
+            model=model,
+        )
 
-		if response.choices:
-			return response.choices[0].message.content
-		print("Error calling Copilot API: No choices returned")
-		return None
-	except Exception as exc:
-		print(f"Exception calling Copilot API: {exc}")
-		return None
+        if response.choices:
+            return response.choices[0].message.content
+        print("Error calling Copilot API: No choices returned")
+        return None
+    except Exception as exc:
+        print(f"Exception calling Copilot API: {exc}")
+        return None
 
 
 def extract_text_from_html(html_content: str) -> str:
-	"""
-	Extract clean text from HTML content.
-	"""
-	try:
-		soup = BeautifulSoup(html_content, "html.parser")
-		for script in soup(["script", "style"]):
-			script.decompose()
-		text = soup.get_text()
-		lines = (line.strip() for line in text.splitlines())
-		chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-		return "\n".join(chunk for chunk in chunks if chunk)
-	except Exception as exc:
-		print(f"Error parsing HTML: {exc}")
-		return html_content
+    """
+    Extract clean text from HTML content.
+    """
+    try:
+        soup = BeautifulSoup(html_content, "html.parser")
+        for script in soup(["script", "style"]):
+            script.decompose()
+        text = soup.get_text()
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        return "\n".join(chunk for chunk in chunks if chunk)
+    except Exception as exc:
+        print(f"Error parsing HTML: {exc}")
+        return html_content
 
 
 def extract_title_from_html(html_content: str) -> str:
-	"""
-	Extract the title from HTML, falling back to the first meaningful text line.
-	"""
-	soup = BeautifulSoup(html_content, "html.parser")
-	heading = soup.find("h1")
-	if heading and heading.get_text(strip=True):
-		return heading.get_text(strip=True)
-	text = extract_text_from_html(html_content)
-	for line in text.splitlines():
-		cleaned = line.strip()
-		if cleaned:
-			return cleaned
-	return "Skill"
+    """
+    Extract the title from HTML, falling back to the first meaningful text line.
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+    heading = soup.find("h1")
+    if heading and heading.get_text(strip=True):
+        return heading.get_text(strip=True)
+    text = extract_text_from_html(html_content)
+    for line in text.splitlines():
+        cleaned = line.strip()
+        if cleaned:
+            return cleaned
+    return "Skill"
 
 
 def slugify_name(name: str, page_id: str) -> str:
